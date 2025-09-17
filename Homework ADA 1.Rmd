@@ -1,0 +1,197 @@
+---
+title: "Homework 1"
+author: "Evelyn Annor"
+date: "`r Sys.Date()`"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+
+```{r}
+getwd()
+setwd("/Users/evelynnketiahannor/Downloads/Advance Data Analysis Class")
+getwd()
+```
+
+```{r}
+#1. Import class one survey data from our Github site (https://github.com/kijohnson/Advanced-Data-Analysis) (The dataset is called ‘Class 1 Survey Fall 2025 2.csv’), calling the R dataframe that you create C1survey.
+
+
+#2. Determine: a. the number of observations (i.e. the number of people who filled out the survey) and b. the number of variables in the dataframe.
+
+pacman::p_load(haven, readr, dplyr, openxlsx)
+C1survey <- read_csv("Class 1 Survey Fall 2025 2.csv")
+```
+```{r}
+#3. a. Rename the column variables to something shorter and that is descriptive of what the variable is about (for example like_dogs for the ‘Do you like dogs?’ question variable) and b. Display that they are renamed. Hints: You can use either the rename_with function or the names function. 
+
+library(dplyr)
+C1survey <- C1survey %>%
+                rename(
+                like_cats= "Do you like cats?",
+                like_dogs= "Do you like dogs?",
+                have_desert= "If you were stranded on a desert island, what is the one item you want to have with you?", 
+                slogan= "If you were to create a slogan for your life, what would the slogan be? (Examples: \"Eat, drink, and be merry, for tomorrow, we all die.\" \"Bite off more than you can chew.\" \"There are far better things ahead than any we leave behind.\")",
+                fav_day= "What is your favorite day of the week?",
+                larkORowl= "Are you a lark, an owl, or a hummingbird?",
+                fav_food= "What is your favorite food?",
+                fav_drink= "What is your favorite drink?",
+                fav_season= "What is your favorite season?",
+                fav_month= "What is your favorite Month?",
+                hobby= "What is one hobby that you enjoy?",
+                program= "What is your degree program?",
+                specialization= "What is your primary specialization?",
+                stat_software= "What is your primary statistical software?",
+                R_exp= "What is your level of R experience (1=None, 5=Advanced)?",                                                 coding_comfort= "How comfortable are you with coding?",
+                coding_length= "How long have you been coding (in years or months)?",
+                top_three= "What are three things you hope to learn in this course?",
+                public_health_interest= "What is your major public health area of interest (e.g. cancer, heart disease, maternal child health, disparities, etc.)?",
+                fav_num= "What is your favorite number?",                                                     
+                bday= "What is your birth day (e.g. October 28-report 28)?",
+                bmonth= "What is your birth month (e.g. October 28-report 10)?",
+                country= "What is your home country?",                                                                             state= "What is your home state/province/etc?",                                                                    city= "What is your home city?",                                                                                    highest_educ_level= "What is your highest education level?"
+                )
+                                                                                                 
+                                                             
+names(C1survey)                                                              
+                                                            
+                                                        
+```
+
+```{r}
+#4. Write code to determine and display the number of factor, integer, numerical, and character variables there are in the C1survey dataset. Suggestion: Try to ask ChatGPT for a solution if you are unsure. There is a really short answer to this but we want to see what students come up with!
+
+sapply(C1survey, class) %>% table()
+
+```
+
+
+```{r}
+#5. a. Using code, check the bday and bmonth variables for any unusual or missing values (hint: use table function). If you find any, b. describe what you will do with the unusual values in a comment before or immediately following the code that does it, and c. after you have cleaned up any unusual values, find the median bday and month. *Note: please make sure that your bday and month variables are numeric before doing statistics
+
+# Check birth month values (including missing)
+# Check birthday values (including missing)
+table(C1survey$bday, useNA = "ifany")
+table(C1survey$bmonth, useNA = "ifany")
+
+#fixing rows with invalid numbers bdays
+C1survey$bday[26] <- 2
+C1survey$bday[22] <- 15
+C1survey$bday[23] <- 24
+C1survey$bday[6] <- 2
+
+
+#fixing rows with invalid numbers bdays
+C1survey$bmonth[4] <- 9
+C1survey$bmonth[6] <- 6
+C1survey$bmonth[14] <- 5
+C1survey$bmonth[15] <- 10
+C1survey$bmonth[22] <- 11
+C1survey$bmonth[23] <- 6
+C1survey$bmonth[26] <- 8
+C1survey$bmonth[34] <- 1
+C1survey$bmonth[53] <- 12
+
+#now removing missing rows
+C1survey_1 <- C1survey %>%
+  filter(!is.na(bday) & !is.na(bmonth))
+#checking to see if the missing values are removed
+colSums(is.na(C1survey_1)[, c("bday", "bmonth")])
+
+#converting to numeric variables
+C1survey_1$bday   <- as.numeric(C1survey_1$bday)
+C1survey_1$bmonth <- as.numeric(C1survey_1$bmonth)
+
+#calculating the median
+median(C1survey_1$bday)
+median(C1survey_1$bmonth)
+
+```
+
+
+```{r}
+#6. a. Create a new variable called bseason that gives the season according to Northern Meteorological season in which respondents were born (winter = 12/1 to 2/29, spring = 3/1 to 5/31, summer = 6/1 to 8/31, fall = 9/1 to 11/30). b. Using the table function, print a table of Seasons in the columns and bmonths in the rows that allows you to check that the coding is correct c. Sum the columns using the addmargins function to answer the question of how many classmates were born in each season? Include your answer in the code.
+
+# Create bseason variable
+C1survey <- C1survey %>%
+  mutate(
+    bseason = case_when(
+      bmonth %in% c(12, 1, 2) ~ "Winter",
+      bmonth %in% 3:5         ~ "Spring",
+      bmonth %in% 6:8         ~ "Summer",
+      bmonth %in% 9:11        ~ "Fall",
+      TRUE                    ~ NA_character_
+    )
+  )
+
+# Cross-tabl, bmonth- rows,bseason- columns
+table(bmonth = C1survey$bmonth, bseason = C1survey$bseason, useNA = "ifany")
+
+# Cross-tab of birth month (rows) by season (columns)
+tab <- table(bmonth = C1survey$bmonth, bseason = C1survey$bseason)
+
+# Add column totals (how many classmates per season)
+tab_with_totals <- addmargins(tab, margin = 2)
+tab_with_totals
+
+# Extract totals for each season
+season_counts <- colSums(tab, na.rm = TRUE)
+
+# Print the answer in code output
+cat("Number of classmates born in each season:\n")
+print(season_counts)
+
+#Answer
+#Number of classmates born in each season:
+#Fall Spring Summer Winter 
+#15     16     16     10 
+
+
+```
+
+
+```{r}
+#7. Pick your favorite variable or variables to analyze, come up with a question you want to answer with that variable or variables, generate the code, and provide an answer to your question. Describe what you did using comments (i.e. #’s).
+
+#Question:How many classmates picked their birth month as their favorite month?
+#comparing Fav month to Birth month
+# First creating a new variable (fmonth) to convert the fav month into a numeric variable.
+
+#Create a lookup table that maps month names -> numbers
+month_lookup <- setNames(1:12, month.name)
+#Creating a new numeric variable fmonth from fav_month
+C1survey <- C1survey %>%
+  mutate(
+    fmonth = month_lookup[fav_month]
+  )
+
+#Creating a TRUE/FALSE variable for whether fav month == birth month
+C1survey <- C1survey %>%
+  mutate(
+    month_match = fmonth == bmonth
+  )
+#Counting how many matched vs not matched
+match_table <- table(C1survey$month_match, useNA = "ifany")
+match_table
+
+#Proportions (so we see percentages too)
+prop.table(match_table)
+
+
+
+#Answer: FALSE  TRUE  <NA> 
+#         24    33     1 
+
+#       FALSE       TRUE       <NA> 
+#.     0.41379310 0.56896552 0.01724138 
+
+#		33 classmates (TRUE) → their favorite month = their birth month.
+#   24 classmates (FALSE) → their favorite month ≠ their birth month.
+#   1 classmate (NA) → missing data in either bmonth or fav_month.
+
+getwd()
+```
+
